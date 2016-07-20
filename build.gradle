@@ -1,0 +1,104 @@
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'war'
+
+sourceCompatibility = 1.7
+compileJava.options.encoding = 'UTF-8'
+
+def groupIdParam = 'kl.server'
+def artifactIdParam = 'udp'
+def versionParam = '1.0.0'
+
+repositories {
+	maven {
+        url "http://10.40.6.48:8081/nexus/content/groups/public/"
+    }	
+	maven {
+        url "http://maven.oschina.net/content/groups/public/"
+    }	
+}
+
+configurations.all {
+    // check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+configurations {
+    env
+	ocx
+}
+
+dependencies {
+	testRuntime "junit:junit:4.+"
+	
+	compile "io.netty:netty-all:4.0.33.Final"
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDir 'src/main/resources'
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+jar {
+    baseName = "${artifactIdParam}"
+    version =  "${versionParam}"
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+// javadoc
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+
+artifacts {
+	archives jar
+	archives sourcesJar
+	archives javadocJar
+}
+
+publishing {
+	repositories {
+		if("${versionParam}".contains("SNAPSHOT") == false) {
+			println "${groupIdParam} : ${versionParam}"
+			maven {
+				url "http://192.168.109.63:8081/nexus/content/repositories/releases/"
+				credentials {
+					username = "admin"
+					password = "admin123"
+				}
+			}
+		} else {
+			println "${groupIdParam} : ${versionParam} : SNAPSHOT"
+			maven {
+				url "http://192.168.109.63:8081/nexus/content/repositories/snapshots/"
+				credentials {
+					username = "admin"
+					password = "admin123"
+				}
+			}
+		}
+	}
+	publications {
+		mavenJava(MavenPublication) {
+			groupId "${groupIdParam}"
+			artifactId "${artifactIdParam}"
+			version "${versionParam}"
+
+			from components.java
+			
+			artifact sourcesJar
+		}
+	}
+}
+
+task listJars << {
+    configurations.env.each { File file -> println file.name }
+}
