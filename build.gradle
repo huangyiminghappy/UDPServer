@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply plugin: 'war'
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 
 def groupIdParam = 'kl.server'
